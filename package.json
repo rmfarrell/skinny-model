@@ -1,0 +1,14 @@
+{
+  "name": "simple-view-model",
+  "version": "1.0.0",
+  "description": "A simple view model which supplies callbacks when a value is changed",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Ryan Farrell",
+  "license": "ISC"
+}
