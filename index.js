@@ -1,48 +1,39 @@
-module.exports = function (value = null, update = function () { }, min, max) {
-  const cn = value.constructor.name
-  switch (cn) {
-    case 'Boolean':
-      return booleanStateManager(...arguments)
-    case 'String':
-      return simpleStateManager(...arguments)
-    case 'Number':
-      return numberStateManager(...arguments)
-    case 'Array':
-      return objectStateManager(...arguments)
-    case 'Object':
-      return objectStateManager(...arguments)
-    default:
-      throw `Unrecognized type. Must be one of Boolean, String, Array, or Object. 
-        Received ${cn}`
-  }
+module.exports = function (value, update = function () { }, cache = false) {
+  if (value.constructor.name === 'Boolean') return booleanStateManager(...arguments)
+  if (value === Object(value)) return objectStateManager(...arguments)
+  return primitiveStateManager(...arguments)
 }
 
 
-function objectStateManager(value = [], onUpdate = function () { }) {
+function objectStateManager(value = [], onUpdate = function () { }, cache = false) {
   return new Proxy(value, {
     set(targ, prop, v, r) {
-      const _old = _clone(r)
+      const old = (cache) ? _clone(r) : undefined
       targ[prop] = v
-      onUpdate(targ, _old)
+      onUpdate(targ, old)
       return true
     },
     deleteProperty(target, prop) {
       if (!prop in target) return
-      this.old = _clone(target)
-      onUpdate(delete target[prop] && target, this.old)
+      const old = (cache) ? _clone(target) : undefined
+      onUpdate(delete target[prop] && target, old)
     }
   });
 }
 
-function simpleStateManager(value, onUpdate = function () { }) {
+function primitiveStateManager(value, onUpdate = function () { }, cache = false) {
   let _value = value
   return {
-    value: _value,
-    update: function (v) {
-      if (v === _value) return
-      onUpdate(v, _value)
+    get value() {
+      return _value
+    },
+    set value(v) {
+      if (_value === v) return
+      const old = (cache) ? _value : undefined
       _value = v
-    }
+      this.onUpdate(v, old)
+    },
+    onUpdate,
   }
 }
 
@@ -56,7 +47,7 @@ function booleanStateManager(value = false, onUpdate = function () { }) {
 }
 
 function numberStateManager(value = 0, onUpdate = function () { }, min = -Infinity, max = Infinity) {
-  const self = simpleStateManager(...arguments)
+  const self = primitiveStateManager(...arguments)
   return Object.assign(self, {
     increment(m = 1) {
       const targ = value = value + m;
@@ -69,7 +60,7 @@ function numberStateManager(value = 0, onUpdate = function () { }, min = -Infini
   })
 }
 
-const stringStateManager = simpleStateManager
+const stringStateManager = primitiveStateManager
 
 function _clone(target) {
   const cn = target.constructor.name
