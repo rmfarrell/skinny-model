@@ -1,14 +1,3 @@
-// class MapFoo extends Map {
-//   set(...args) {
-//     console.log("set called");
-//     return super.set(...args);
-//   }
-//   get(...args) {
-//     console.log("get called");
-//     return super.get(...args);
-//   }
-// }
-
 /**
  * Watch the state of an Object value
  * Fire a callback when the the value is updated with the new and previous values 
@@ -38,34 +27,32 @@ function _objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
       targ[prop] = v
       onUpdate(targ, old)
       return true
-    },
-    deleteProperty(target, prop) {
-      if (!prop in target) return
-      const old = (clone) ? _clone(target) : undefined
-      onUpdate(delete target[prop] && target, old)
     }
+    // deleteProperty(target, prop) {
+    //   if (!prop in target) return
+    //   const old = (clone) ? _clone(target) : undefined
+    //   onUpdate(delete target[prop] && target, old)
+    // }
   })
 }
 
 function _mapWatcher(input, onUpdate = function () { }, clone = false) {
-  const mSet = input.set
-  const mGet = input.get
+  const _set = input.set
+  const _delete = input.delete
   input.set = function (...args) {
-    const old = (clone) ? _clone(r) : undefined
-    mSet.apply(input, args);
+    const old = (clone) ? _clone(input) : undefined
+    _set.apply(input, args);
     onUpdate(input, old)
     return true
   }
-  input.get = function (...args) {
-    return mGet.apply(input, args);
+  input.delete = function (...args) {
+    if (!input.get(args[0])) return
+    const old = (clone) ? _clone(input) : undefined
+    _delete.apply(input, args);
+    onUpdate(input, old)
+    return true
   }
-  return new Proxy(input, {
-    deleteProperty(target, prop) {
-      if (!prop in target) return
-      const old = (clone) ? _clone(target) : undefined
-      onUpdate(delete target[prop] && target, old)
-    }
-  })
+  return input
 }
 
 /**
@@ -92,45 +79,14 @@ function primitiveWatcher(value, onUpdate = function () { }) {
   }
 }
 
-/**
- * @typedef {object} PrimitiveWatcher
- * @property {getter/setter} value current value of the primitive
- * @property {function}
- */
-
-
-// function booleanStateManager(value = false, onUpdate = function () { }) {
-//   const self = simpleStateManager(...arguments)
-//   return Object.assign(self, {
-//     toggle() {
-//       self.update.call(this, self.value)
-//     },
-//   })
-// }
-
-// function numberStateManager(value = 0, onUpdate = function () { }, min = -Infinity, max = Infinity) {
-//   const self = primitiveStateManager(...arguments)
-//   return Object.assign(self, {
-//     increment(m = 1) {
-//       const targ = value = value + m;
-//       (targ <= max) && self.update.call(this, value)
-//     },
-//     decrement(m = 1) {
-//       const targ = value = value - m;
-//       (targ >= min) && self.update.call(this, value)
-//     },
-//   })
-// }
-
-// const stringStateManager = primitiveStateManager
-
 function _clone(target) {
   const cn = target.constructor.name
   if (cn === 'Array') return target.slice(0)
   if (cn === 'Object') return Object.assign({}, target)
   if (cn === 'Map') {
     let out = new Map()
-    for (var i in target) out[i] = target[i];
+    target.forEach((v, k) => out.set(k, v))
+    return out
   }
 }
 
@@ -138,3 +94,9 @@ module.exports = {
   primitiveWatcher,
   objectWatcher,
 }
+
+/**
+ * @typedef {object} PrimitiveWatcher
+ * @property {getter/setter} value current value of the primitive
+ * @property {function}
+ */
