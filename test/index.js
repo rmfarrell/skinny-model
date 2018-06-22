@@ -1,53 +1,47 @@
 const assert = require('assert');
-const svm = require('../index');
+const { primitiveWatcher, objectWatcher } = require('../index');
 
-describe('SimpleViewModel', function () {
-  describe('Primitive context', function () {
-    it('should update when a new value is set', function () {
-      let ss = svm('foo', (val) => {
-        assert.equal(ss.value, 'bar')
-      })
-      ss.value = 'bar'
-    });
-    it('should not update when new value is unchanged', function (done) {
-      let called = false
-      let ss = svm('foo', (val) => {
-        called = true;
-      })
-      ss.value = 'foo'
-      setTimeout(() => {
-        assert.equal(called, false)
-        done()
-      }, 200)
-    });
-    it('should pass new value in onUpdate function', function () {
-      let ss = svm('foo', (val) => {
-        assert.equal(val, 'bar')
-      })
-      ss.value = 'bar'
-    });
-    it('should pass old value in onUpdate function if 3rd argument == true', function () {
-      let ss = svm('foo', (newValue, oldValue) => {
-        assert.equal(oldValue, 'foo')
-      }, true)
-      ss.value = 'bar'
-    });
-    it('should not pass old value in onUpdate function if 3rd argument == false', function () {
-      let ss = svm('foo', (newValue, oldValue) => {
-        assert.equal(oldValue, undefined)
-      }, false)
-      ss.value = 'bar'
-    });
-    it('should allow assignment to onUpdate', () => {
-      let ss = svm('foo')
-      ss.onUpdate = (val) => {
-        assert.equal(val, 'bar')
-      }
-      ss.value = 'bar'
+// When first param is a JS primitive
+describe('primitiveWatcher', function () {
+  it('should update when a new value is set', function () {
+    let watcher = primitiveWatcher('foo', (val) => {
+      assert.equal(watcher.data, 'bar')
     })
+    watcher.data = 'bar'
   });
-
-  describe('Object context', function () {
-
+  it('should not update when new value is unchanged', function (done) {
+    let called = false
+    let watcher = primitiveWatcher('foo', (val) => {
+      called = true;
+    })
+    watcher.data = 'foo'
+    setTimeout(() => {
+      assert.equal(called, false)
+      done()
+    }, 200)
+  });
+  it('should pass new value in onUpdate function', function () {
+    let watcher = primitiveWatcher('foo', (val) => {
+      assert.equal(val, 'bar')
+    })
+    watcher.data = 'bar'
+  });
+  it('should pass old value in onUpdate function if 3rd argument == true', function () {
+    let watcher = primitiveWatcher('foo', (newValue, oldValue) => {
+      assert.equal(oldValue, 'foo')
+    }, true)
+    watcher.data = 'bar'
+  });
+  it('should allow reassignment to onUpdate', () => {
+    let watcher = primitiveWatcher('foo')
+    watcher.onUpdate = (val) => {
+      assert.equal(val, 'bar')
+    }
+    watcher.data = 'bar'
   })
 });
+
+// When first param is a JS primitive
+describe('objectWatcher', function () {
+  it('should ')
+})
