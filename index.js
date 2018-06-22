@@ -1,3 +1,14 @@
+// class MapFoo extends Map {
+//   set(...args) {
+//     console.log("set called");
+//     return super.set(...args);
+//   }
+//   get(...args) {
+//     console.log("get called");
+//     return super.get(...args);
+//   }
+// }
+
 /**
  * Watch the state of an Object value
  * Fire a callback when the the value is updated with the new and previous values 
@@ -6,24 +17,55 @@
  * @param {function} onUpdate 
  * @param {boolean} clone
  */
-function objectWatcher(value = [], onUpdate = function () { }, clone = false) {
-  // if (value === Object(value)) return objectStateManager(...arguments)
-  return {
-    data: new Proxy(value, {
-      set(targ, prop, v, r) {
-        const old = (clone) ? _clone(r) : undefined
-        targ[prop] = v
-        this.onUpdate(targ, old)
-        return true
-      },
-      deleteProperty(target, prop) {
-        if (!prop in target) return
-        const old = (clone) ? _clone(target) : undefined
-        this.onUpdate(delete target[prop] && target, old)
-      }
-    }),
-    onUpdate,
+function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
+  // validate value is an object
+  if (input !== Object(input)) throw new Error(`${input} is not an Object.`)
+
+  let out = { onUpdate }
+
+  if (input.constructor.name === 'Map') {
+    out.data = _mapWatcher(input, out.onUpdate, clone);
+  } else {
+    out.data = _objectWatcher(input, out.onUpdate, clone);
   }
+  return out
+}
+
+function _objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
+  return new Proxy(input, {
+    set(targ, prop, v, r) {
+      const old = (clone) ? _clone(r) : undefined
+      targ[prop] = v
+      onUpdate(targ, old)
+      return true
+    },
+    deleteProperty(target, prop) {
+      if (!prop in target) return
+      const old = (clone) ? _clone(target) : undefined
+      onUpdate(delete target[prop] && target, old)
+    }
+  })
+}
+
+function _mapWatcher(input, onUpdate = function () { }, clone = false) {
+  const mSet = input.set
+  const mGet = input.get
+  input.set = function (...args) {
+    const old = (clone) ? _clone(r) : undefined
+    mSet.apply(input, args);
+    onUpdate(input, old)
+    return true
+  }
+  input.get = function (...args) {
+    return mGet.apply(input, args);
+  }
+  return new Proxy(input, {
+    deleteProperty(target, prop) {
+      if (!prop in target) return
+      const old = (clone) ? _clone(target) : undefined
+      onUpdate(delete target[prop] && target, old)
+    }
+  })
 }
 
 /**
@@ -84,9 +126,12 @@ function primitiveWatcher(value, onUpdate = function () { }) {
 
 function _clone(target) {
   const cn = target.constructor.name
-  if (cn === 'Array') { return target.slice(0) }
-  if (cn === 'Object') { return Object.assign({}, target) }
-  // TODO clone Map
+  if (cn === 'Array') return target.slice(0)
+  if (cn === 'Object') return Object.assign({}, target)
+  if (cn === 'Map') {
+    let out = new Map()
+    for (var i in target) out[i] = target[i];
+  }
 }
 
 module.exports = {
