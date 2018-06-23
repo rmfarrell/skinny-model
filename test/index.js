@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { primitiveWatcher, objectWatcher, mapWatcher } = require('../index');
+const { primitiveWatcher, objectWatcher, mapWatcher, arrayWatcher } = require('../index');
 
 
 describe('primitiveWatcher', function () {
@@ -29,23 +29,59 @@ describe('primitiveWatcher', function () {
 });
 
 describe('objectWatcher', function () {
-  context('Not an object', function () {
-    it('should throw an error if a non-object is passed as first argument', function () {
-      assert.throws(() => objectWatcher(false), Error, 'false is not an object');
-    })
-  })
+  // context('Not an object', function () {
+  //   it('should throw an error if a non-object is passed as first argument', function () {
+  //     assert.throws(() => objectWatcher(false), Error, 'false is not an object');
+  //   })
+  // })
   context('Object literal', function () {
+    const expected = [
+      { x: 2 },
+      { x: undefined },
+      { x: null },
+      { x: null, y: 'foo' },
+      { x: null }
+    ]
+    const runMutations = function (watcher) {
+
+      // reassignment
+      watcher.data.x = 2
+      watcher.data.x = undefined
+      watcher.data.x = null
+
+      // key addition
+      watcher.data.y = 'foo'
+
+      // key deletion
+      delete watcher.data.y
+    }
     it('should fire callback when data is updated', function (done) {
-      let watcher = objectWatcher({ x: 1 }, ({ x }) => {
-        assert.equal(watcher.data.x, 2)
-        assert.equal(x, 2)
+      let counter = 0
+      let watcher = objectWatcher({ x: 1 }, (data) => {
+        assert.deepEqual(data, expected[counter])
+        assert.deepEqual(watcher.data, expected[counter])
+        if (counter + 1 < expected.length) return counter++;
         done()
       })
-      watcher.data.x = 2
+      runMutations(watcher)
+    })
+    it('should pass clone of old data if third argument is true @', function (done) {
+      let counter = 0
+      let watcher = objectWatcher({ x: 1 }, (_, oldValue) => {
+        if (counter > 0)
+          assert.deepEqual(oldValue, expected[counter - 1])
+        else
+          assert.deepEqual(oldValue, { x: 1 })
+        if (counter + 1 < expected.length) return counter++;
+        done()
+      }, true)
+      runMutations(watcher)
     })
   })
+})
 
-  context('Array', function () {
+describe('Array', function () {
+  it('should fire callback when data is updated', function (done) {
     const expected = [
       [1, 2],
       [1, 2, 'foo'],
@@ -56,22 +92,21 @@ describe('objectWatcher', function () {
       [1, 2, 'bar', , , 5],
       [1, 2, 'bar', , , undefined]
     ]
-    it('should fire callback when data is updated', function (done) {
-      let counter = 0
-      let watcher = objectWatcher([1, 2, 3], (val) => {
-        assert.deepEqual(watcher.data, expected[counter])
-        assert.deepEqual(val, expected[counter])
-        if (counter >= expected.length - 1) return done()
-        counter++
-      })
-      watcher.data.pop()
-      watcher.data.push('foo')
-      watcher.data[2] = 'bar'
-      watcher.data[5] = 5
-      watcher.data[5] = undefined
-    });
+    let counter = 0
+    let watcher = arrayWatcher([1, 2, 3], (val) => {
+      assert.deepEqual(watcher.data, expected[counter])
+      assert.deepEqual(val, expected[counter])
+      if (counter + 1 < expected.length) return counter++;
+      done()
+    })
+    watcher.data.pop()
+    watcher.data.push('foo')
+    watcher.data[2] = 'bar'
+    watcher.data[5] = 5
+    watcher.data[5] = undefined
   })
 })
+
 describe('mapWatcher', function () {
   it('should fire callback when data is updated', function (done) {
     let mappy = new Map()

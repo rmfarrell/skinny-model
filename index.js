@@ -7,25 +7,42 @@
  * @param {boolean} clone
  */
 function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
-  // validate value is an object
-  const cn = input.constructor.name
-  if (cn !== 'Object' && cn !== 'Array') throw new Error(`Expected an Object or Array. Received ${input}`)
+  let out = { onUpdate }
+  out.data = new Proxy(input, {
+    set(targ, prop, v, r) {
+      old = _clone(targ)
+      targ[prop] = v
+      out.onUpdate(targ, old)
+      return true
+    },
+    deleteProperty(targ, prop) {
+      if (!prop in targ) return
+      old = _clone(targ)
+      delete targ[prop]
+      out.onUpdate(targ, old)
+      return true
+    }
+  })
+  return out
+
+  function _clone(obj) {
+    return (clone) ? Object.assign({}, obj) : undefined
+  }
+}
+
+function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
   let out = { onUpdate }
   out.data = new Proxy(input, {
     set(targ, prop, v, r) {
       const old = (clone) ? _clone(r) : undefined
       targ[prop] = v
-      onUpdate(targ, old)
+      out.onUpdate(targ, old)
       return true
     }
-    // deleteProperty(target, prop) {
-    //   if (!prop in target) return
-    //   const old = (clone) ? _clone(target) : undefined
-    //   onUpdate(delete target[prop] && target, old)
-    // }
   })
   return out
 }
+
 
 function mapWatcher(input, onUpdate = function () { }, clone = false) {
   const data = _clone(input)
@@ -72,7 +89,8 @@ function primitiveWatcher(value, onUpdate = function () { }) {
   }
 }
 
-// todo separate function
+// TODO delete
+// separate function
 function _clone(target) {
   const cn = target.constructor.name
   if (cn === 'Array') return target.slice(0)
@@ -88,6 +106,7 @@ module.exports = {
   primitiveWatcher,
   objectWatcher,
   mapWatcher,
+  arrayWatcher,
 }
 
 /**
