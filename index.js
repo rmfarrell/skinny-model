@@ -8,20 +8,10 @@
  */
 function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
   // validate value is an object
-  if (input !== Object(input)) throw new Error(`${input} is not an Object.`)
-
+  const cn = input.constructor.name
+  if (cn !== 'Object' && cn !== 'Array') throw new Error(`Expected an Object or Array. Received ${input}`)
   let out = { onUpdate }
-
-  if (input.constructor.name === 'Map') {
-    out.data = _mapWatcher(input, out.onUpdate, clone);
-  } else {
-    out.data = _objectWatcher(input, out.onUpdate, clone);
-  }
-  return out
-}
-
-function _objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
-  return new Proxy(input, {
+  out.data = new Proxy(input, {
     set(targ, prop, v, r) {
       const old = (clone) ? _clone(r) : undefined
       targ[prop] = v
@@ -34,25 +24,28 @@ function _objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
     //   onUpdate(delete target[prop] && target, old)
     // }
   })
+  return out
 }
 
-function _mapWatcher(input, onUpdate = function () { }, clone = false) {
+function mapWatcher(input, onUpdate = function () { }, clone = false) {
+  const data = _clone(input)
   const _set = input.set
   const _delete = input.delete
-  input.set = function (...args) {
-    const old = (clone) ? _clone(input) : undefined
-    _set.apply(input, args);
-    onUpdate(input, old)
+  let out = { onUpdate, data }
+  out.data.set = function (...args) {
+    const old = (clone) ? _clone(data) : undefined
+    _set.apply(data, args);
+    out.onUpdate(data, old)
     return true
   }
-  input.delete = function (...args) {
-    if (!input.get(args[0])) return
-    const old = (clone) ? _clone(input) : undefined
-    _delete.apply(input, args);
-    onUpdate(input, old)
+  out.data.delete = function (...args) {
+    if (!data.get(args[0])) return
+    const old = (clone) ? _clone(data) : undefined
+    _delete.apply(data, args);
+    out.onUpdate(data, old)
     return true
   }
-  return input
+  return out
 }
 
 /**
@@ -79,6 +72,7 @@ function primitiveWatcher(value, onUpdate = function () { }) {
   }
 }
 
+// todo separate function
 function _clone(target) {
   const cn = target.constructor.name
   if (cn === 'Array') return target.slice(0)
@@ -93,6 +87,7 @@ function _clone(target) {
 module.exports = {
   primitiveWatcher,
   objectWatcher,
+  mapWatcher,
 }
 
 /**

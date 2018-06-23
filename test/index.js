@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { primitiveWatcher, objectWatcher } = require('../index');
+const { primitiveWatcher, objectWatcher, mapWatcher } = require('../index');
 
 
 describe('primitiveWatcher', function () {
@@ -36,52 +36,15 @@ describe('objectWatcher', function () {
   })
   context('Object literal', function () {
     it('should fire callback when data is updated', function (done) {
-      let watcher = objectWatcher({ x: 1 }, () => {
+      let watcher = objectWatcher({ x: 1 }, ({ x }) => {
         assert.equal(watcher.data.x, 2)
+        assert.equal(x, 2)
         done()
       })
       watcher.data.x = 2
     })
   })
-  context('Map', function () {
-    it('should fire callback when data is updated', function (done) {
-      let mappy = new Map()
-      mappy.set('x', 'foo')
-      mappy.set('y', 2)
-      let watcher = objectWatcher(mappy, () => {
-        assert.equal(watcher.data.get('x'), 'bar')
-        assert.equal(watcher.data.get('y'), 2)
-        done()
-      })
-      watcher.data.set('x', 'bar')
-    });
-    it('should fire callback when map item is deleted', function (done) {
-      let mappy = new Map()
-      mappy.set('x', 'foo')
-      mappy.set('y', 2)
-      let watcher = objectWatcher(mappy, () => {
-        assert.equal(watcher.data.get('x'), undefined)
-        assert.equal(watcher.data.get('y'), 2)
-        done()
-      })
-      watcher.data.delete('x')
-    });
-    it('focus should pass a clone to the callback if the third argument is true', function (done) {
-      let mappy = new Map()
-      mappy.set('x', 'foo')
-      mappy.set('y', 2)
-      let watcher = objectWatcher(mappy, (current, previous) => {
-        assert.equal(mappy.get('x'), 'bar')
-        assert.equal(mappy.get('y'), 2)
-        assert.equal(current.get('x'), 'bar')
-        assert.equal(current.get('y'), 2)
-        assert.equal(previous.get('x'), 'foo')
-        assert.equal(previous.get('y'), 2)
-        done()
-      }, true)
-      mappy.set('x', 'bar')
-    });
-  })
+
   context('Array', function () {
     const expected = [
       [1, 2],
@@ -107,5 +70,43 @@ describe('objectWatcher', function () {
       watcher.data[5] = 5
       watcher.data[5] = undefined
     });
+  })
+})
+describe('mapWatcher', function () {
+  it('should fire callback when data is updated', function (done) {
+    let mappy = new Map()
+    mappy.set('x', 'foo')
+    mappy.set('y', 2)
+    let watcher = mapWatcher(mappy, () => {
+      assert.equal(watcher.data.get('x'), 'bar')
+      assert.equal(watcher.data.get('y'), 2)
+      done()
+    })
+    watcher.data.set('x', 'bar')
+  });
+  it('should fire callback when map item is deleted', function (done) {
+    let mappy = new Map()
+    mappy.set('x', 'foo')
+    mappy.set('y', 2)
+    let watcher = mapWatcher(mappy, () => {
+      assert.equal(watcher.data.get('x'), undefined)
+      assert.equal(watcher.data.get('y'), 2)
+      done()
+    })
+    watcher.data.delete('x')
+  });
+
+  it('should pass a clone to the callback if the third argument is true', function (done) {
+    let mappy = new Map()
+    mappy.set('x', 'foo')
+    mappy.set('y', 2)
+    let watcher = mapWatcher(mappy, (current, previous) => {
+      assert.equal(current.get('x'), 'bar')
+      assert.equal(current.get('y'), 2)
+      assert.equal(previous.get('x'), 'foo')
+      assert.equal(previous.get('y'), 2)
+      done()
+    }, true)
+    watcher.data.set('x', 'bar')
   })
 })
