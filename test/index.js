@@ -65,7 +65,7 @@ describe('objectWatcher', function () {
       })
       runMutations(watcher)
     })
-    it('should pass clone of old data if third argument is true @', function (done) {
+    it('should pass clone of old data if third argument is true', function (done) {
       let counter = 0
       let watcher = objectWatcher({ x: 1 }, (_, oldValue) => {
         if (counter > 0)
@@ -80,7 +80,7 @@ describe('objectWatcher', function () {
   })
 })
 
-describe('Array', function () {
+describe('arrayWatcher', function () {
   it('should fire callback when data is updated', function (done) {
     const expected = [
       [1, 2],
@@ -99,11 +99,26 @@ describe('Array', function () {
       if (counter + 1 < expected.length) return counter++;
       done()
     })
+
+    // removal
     watcher.data.pop()
+
+    // addition
     watcher.data.push('foo')
+
+    // reassignment
     watcher.data[2] = 'bar'
     watcher.data[5] = 5
     watcher.data[5] = undefined
+  })
+  it('should pass clone of old data if third argument is true', function (done) {
+    let counter = 0
+    let watcher = objectWatcher([1, 2, 3], (newValue, oldValue) => {
+      assert.deepEqual(oldValue, [1, 2, 3])
+      assert.deepEqual(newValue, ['bar', 2, 3])
+      done()
+    }, true)
+    watcher.data[0] = 'bar'
   })
 })
 

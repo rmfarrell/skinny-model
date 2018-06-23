@@ -9,7 +9,7 @@
 function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
   let out = { onUpdate }
   out.data = new Proxy(input, {
-    set(targ, prop, v, r) {
+    set(targ, prop, v) {
       old = _clone(targ)
       targ[prop] = v
       out.onUpdate(targ, old)
@@ -33,8 +33,8 @@ function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
 function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
   let out = { onUpdate }
   out.data = new Proxy(input, {
-    set(targ, prop, v, r) {
-      const old = (clone) ? _clone(r) : undefined
+    set(targ, prop, v) {
+      const old = (clone) ? _clone(targ) : undefined
       targ[prop] = v
       out.onUpdate(targ, old)
       return true
