@@ -1,8 +1,14 @@
-module.exports = {
-  primitiveObserver,
-  objectObserver,
-  mapObserver,
-  arrayObserver,
+module.exports = function (input = {}, onUpdate = function () { }, clone = false) {
+  const cn = input.constructor.name
+  if (cn === 'Object') return objectObserver(...arguments)
+  if (cn === 'Array') return arrayObserver(...arguments)
+  if (cn === 'Map') return mapObserver(...arguments)
+  if (['Number', 'String', 'Boolean', undefined, null].includes(cn)) {
+    return primitiveObserver(...arguments)
+  }
+  throw new Error(`Type error. 
+    Expected one of Object, Array, Map, Number, String, Boolean, undefined, or null. 
+    Received ${cn}`)
 }
 
 /**
