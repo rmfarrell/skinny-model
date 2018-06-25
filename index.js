@@ -1,4 +1,14 @@
 /**
+ * Router function for all watcher types
+ * @param {*} input 
+ * @param {*} onUpdate 
+ * @param {*} clone 
+ */
+function watcher(input = {}, onUpdate = function () { }, clone = false) {
+
+}
+
+/**
  * Watch the state of a primitive value
  * Fire a callback when the the value is updated with the new and previous values 
  * passed in the callback param
@@ -7,6 +17,7 @@
  * @return {PrimitiveWatcher}
  */
 function primitiveWatcher(value, onUpdate = function () { }) {
+  if (_isObject(value)) throw new Error(`${value} is not a primitive value.`)
   const callbackCollection = _CallbackCollection([onUpdate])
   let _value = value
   return {
@@ -25,14 +36,18 @@ function primitiveWatcher(value, onUpdate = function () { }) {
 }
 
 /**
- * Watch the state of an Object value
+ * Watch the state of an Object literal
  * Fire a callback when the the value is updated with the new and previous values 
  * passed in the callback param
- * @param {object} value 
- * @param {function} onUpdate 
+ * @param {array} value 
+ * @param {function} onUpdate
  * @param {boolean} clone
+ * @return {ObjectWatcher}
  */
 function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
+  if (input.constructor.name !== 'Object') {
+    throw new Error(`Expected Object literal. Recieved ${input.constructor.name}`)
+  }
   const callbackCollection = _CallbackCollection([onUpdate])
   const data = new Proxy(input, {
     set(targ, prop, v) {
@@ -67,8 +82,12 @@ function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
  * @param {array} value 
  * @param {function} onUpdate 
  * @param {boolean} clone
+ * @return {ObjectWatcher}
  */
 function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
+  if (input.constructor.name !== 'Array') {
+    throw new Error(`Expected Array. Recieved ${input.constructor.name}`)
+  }
   const callbackCollection = _CallbackCollection([onUpdate])
   const data = new Proxy(input, {
     set(targ, prop, v) {
@@ -84,12 +103,20 @@ function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
     unsubscribe: (func) => callbackCollection.remove(func),
   }
 
-  function __clone() {
+  function __clone(target) {
     return (clone) ? target.slice(0) : undefined
   }
 }
 
-
+/**
+ * Watch the state of a map
+ * Fire a callback when the the value is updated with the new and previous values 
+ * passed in the callback param
+ * @param {array} value 
+ * @param {function} onUpdate
+ * @param {boolean} clone
+ * @return {ObjectWatcher}
+ */
 function mapWatcher(input, onUpdate = function () { }, clone = false) {
   const callbackCollection = _CallbackCollection([onUpdate])
   const data = __clone(input)
@@ -117,19 +144,6 @@ function mapWatcher(input, onUpdate = function () { }, clone = false) {
   function __clone(m) {
     let out = new Map()
     m.forEach((v, k) => out.set(k, v))
-    return out
-  }
-}
-
-// TODO delete
-// separate function
-function _clone(target) {
-  const cn = target.constructor.name
-  if (cn === 'Array') return target.slice(0)
-  if (cn === 'Object') return Object.assign({}, target)
-  if (cn === 'Map') {
-    let out = new Map()
-    target.forEach((v, k) => out.set(k, v))
     return out
   }
 }
@@ -168,12 +182,33 @@ function _CallbackCollection(funcs = []) {
   }
 }
 
+// validate a type against an array of constructor names; 
+// throw error if it does not conform
+function _validateType(obj, cns = []) {
+  if (cn.constructor.name.indexOf(foo) > -1) {
+    throw new Error(`Expected ${cn}. Recieved ${obj.constructor.name}`)
+  }
+  return true
+}
+
+// Check whether input is object
+function _isObject(obj) {
+  return (Object(obj) === obj)
+}
+
 module.exports = {
   primitiveWatcher,
   objectWatcher,
   mapWatcher,
   arrayWatcher,
 }
+
+/**
+ * @typedef {object} ObjectWatcher
+ * @property {map|object|array} data
+ * @property {function} subscribe
+ * @property {function} unsubscribe
+ */
 
 /**
  * @typedef {object} PrimitiveWatcher
