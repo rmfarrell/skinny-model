@@ -28,7 +28,7 @@ function primitiveWatcher(value, onUpdate = function () { }) {
  * Watch the state of an Object value
  * Fire a callback when the the value is updated with the new and previous values 
  * passed in the callback param
- * @param {object|array|map} value 
+ * @param {object} value 
  * @param {function} onUpdate 
  * @param {boolean} clone
  */
@@ -36,14 +36,14 @@ function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
   const callbackCollection = _CallbackCollection([onUpdate])
   const data = new Proxy(input, {
     set(targ, prop, v) {
-      old = _clone(targ)
+      old = __clone(targ)
       targ[prop] = v
       callbackCollection.run(targ, old)
       return true
     },
     deleteProperty(targ, prop) {
       if (!prop in targ) return
-      old = _clone(targ)
+      old = __clone(targ)
       delete targ[prop]
       callbackCollection.run(targ, old)
       return true
@@ -55,58 +55,70 @@ function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
     unsubscribe: (func) => callbackCollection.remove(func),
   }
 
-  function _clone(obj) {
+  function __clone(obj) {
     return (clone) ? Object.assign({}, obj) : undefined
   }
 }
 
-function _publish(subs = [], ...args) {
-  subs.forEach((func) => {
-    func(...args)
-  })
-}
-
-function _subscribe(functionsArray, func) {
-  if (typeof func !== 'function') {
-    throw new Error(`
-      appendCallback must pass function as first argument. Recieved ${func}`)
-  }
-  functionsArray.push(func)
-}
-
+/**
+ * Watch the state of an Array
+ * Fire a callback when the the value is updated with the new and previous values 
+ * passed in the callback param
+ * @param {array} value 
+ * @param {function} onUpdate 
+ * @param {boolean} clone
+ */
 function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
-  let out = { onUpdate }
-  out.data = new Proxy(input, {
+  const callbackCollection = _CallbackCollection([onUpdate])
+  const data = new Proxy(input, {
     set(targ, prop, v) {
-      const old = (clone) ? _clone(targ) : undefined
+      const old = __clone(targ)
       targ[prop] = v
-      out.onUpdate(targ, old)
+      callbackCollection.run(targ, old)
       return true
     }
   })
-  return out
+  return {
+    data,
+    subscribe: (func) => callbackCollection.add(func),
+    unsubscribe: (func) => callbackCollection.remove(func),
+  }
+
+  function __clone() {
+    return (clone) ? target.slice(0) : undefined
+  }
 }
 
 
 function mapWatcher(input, onUpdate = function () { }, clone = false) {
-  const data = _clone(input)
+  const callbackCollection = _CallbackCollection([onUpdate])
+  const data = __clone(input)
   const _set = input.set
   const _delete = input.delete
-  let out = { onUpdate, data }
-  out.data.set = function (...args) {
-    const old = (clone) ? _clone(data) : undefined
-    _set.apply(data, args);
-    out.onUpdate(data, old)
+  data.set = function (...args) {
+    const old = (clone) ? __clone(data) : undefined
+    _set.apply(data, args)
+    callbackCollection.run(data, old)
     return true
   }
-  out.data.delete = function (...args) {
+  data.delete = function (...args) {
     if (!data.get(args[0])) return
-    const old = (clone) ? _clone(data) : undefined
+    const old = (clone) ? __clone(data) : undefined
     _delete.apply(data, args);
-    out.onUpdate(data, old)
+    callbackCollection.run(data, old)
     return true
   }
-  return out
+  return {
+    data,
+    subscribe: (func) => callbackCollection.add(func),
+    unsubscribe: (func) => callbackCollection.remove(func),
+  }
+
+  function __clone(m) {
+    let out = new Map()
+    m.forEach((v, k) => out.set(k, v))
+    return out
+  }
 }
 
 // TODO delete
