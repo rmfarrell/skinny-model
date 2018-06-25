@@ -1,3 +1,16 @@
+module.exports = {
+  primitiveWatcher,
+  objectWatcher,
+  mapWatcher,
+  arrayWatcher,
+}
+
+/**
+ * @typedef {object} PrimitiveWatcher
+ * @property {getter/setter} value current value of the primitive
+ * @property {function}
+ */
+
 /**
  * Watch the state of a primitive value
  * Fire a callback when the the value is updated with the new and previous values 
@@ -24,6 +37,15 @@ function primitiveWatcher(value, onUpdate = function () { }) {
     unsubscribe: (func) => callbackCollection.remove(func),
   }
 }
+
+
+/**
+ * @typedef {object} ObjectWatcher
+ * @property {map|object|array} data
+ * @property {function} subscribe
+ * @property {function} unsubscribe
+ */
+
 
 /**
  * Watch the state of an Object literal
@@ -141,6 +163,14 @@ function mapWatcher(input, onUpdate = function () { }, clone = false) {
   }
 }
 
+
+/**
+ * @typedef {object} CallbackCollection
+ * @property {function} add add a function to a collection
+ * @property {function} remove remove a function to a collection
+ * @property {function} run run each function passing arguments through unchanged
+ */
+
 /**
  * Manage a set of callbacks with add/remove methods
  * Run method runs each passing through the arguments
@@ -179,30 +209,3 @@ function _CallbackCollection(funcs = []) {
 function _isObject(obj) {
   return (Object(obj) === obj)
 }
-
-module.exports = {
-  primitiveWatcher,
-  objectWatcher,
-  mapWatcher,
-  arrayWatcher,
-}
-
-/**
- * @typedef {object} ObjectWatcher
- * @property {map|object|array} data
- * @property {function} subscribe
- * @property {function} unsubscribe
- */
-
-/**
- * @typedef {object} PrimitiveWatcher
- * @property {getter/setter} value current value of the primitive
- * @property {function}
- */
-
- /**
- * @typedef {object} CallbackCollection
- * @property {function} add add a function to a collection
- * @property {function} remove remove a function to a collection
- * @property {function} run run each function passing arguments through unchanged
- */
