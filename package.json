@@ -1,7 +1,7 @@
 {
-  "name": "simple-view-model",
+  "name": "skinny-model",
   "version": "1.0.0",
-  "description": "A simple view model which supplies callbacks when a value is changed",
+  "description": "A set of simple observers that call connected callbacks when updated.",
   "main": "index.js",
   "directories": {
     "test": "test"
