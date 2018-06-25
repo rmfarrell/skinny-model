@@ -1,14 +1,4 @@
 /**
- * Router function for all watcher types
- * @param {*} input 
- * @param {*} onUpdate 
- * @param {*} clone 
- */
-function watcher(input = {}, onUpdate = function () { }, clone = false) {
-
-}
-
-/**
  * Watch the state of a primitive value
  * Fire a callback when the the value is updated with the new and previous values 
  * passed in the callback param
@@ -118,6 +108,9 @@ function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
  * @return {ObjectWatcher}
  */
 function mapWatcher(input, onUpdate = function () { }, clone = false) {
+  if (input.constructor.name !== 'Map') {
+    throw new Error(`Expected Map. Recieved ${input.constructor.name}`)
+  }
   const callbackCollection = _CallbackCollection([onUpdate])
   const data = __clone(input)
   const _set = input.set
@@ -180,15 +173,6 @@ function _CallbackCollection(funcs = []) {
     remove,
     run,
   }
-}
-
-// validate a type against an array of constructor names; 
-// throw error if it does not conform
-function _validateType(obj, cns = []) {
-  if (cn.constructor.name.indexOf(foo) > -1) {
-    throw new Error(`Expected ${cn}. Recieved ${obj.constructor.name}`)
-  }
-  return true
 }
 
 // Check whether input is object

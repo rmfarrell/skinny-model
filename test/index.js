@@ -232,7 +232,6 @@ describe('arrayWatcher.unsubscribe', function () {
     const addTwo = () => { subject = subject + 2 }
     watcher.subscribe(addOne)
     watcher.subscribe(addTwo)
-    // modify data twice; 2nd time unsubscribing addTwo.
     watcher.data[0] = true
     watcher.unsubscribe(addTwo)
     watcher.data[0] = false
@@ -290,6 +289,13 @@ describe('mapWatcher', function () {
     mappy.set('x', 'should fail')
     watcher.data.set('x', true)
   })
+  it('should throw if non-map is passed as first param', function () {
+    assert.throws(() => mapWatcher(false), Error)
+    assert.throws(() => mapWatcher('foo'), Error)
+    assert.throws(() => mapWatcher([]), Error)
+    assert.throws(() => mapWatcher(new Set()), Error)
+    assert.throws(() => mapWatcher({}), Error)
+  })
 })
 describe('mapWatcher.subscribe', function () {
   it('should allow the subscription of multiple callbacks', function () {
@@ -309,7 +315,6 @@ describe('mapWatcher.unsubscribe', function () {
     const addTwo = () => subject = subject + 2
     watcher.subscribe(addOne)
     watcher.subscribe(addTwo)
-    // modify data twice; 2nd time unsubscribing addTwo.
     watcher.data.set('x', false)
     watcher.unsubscribe(addTwo)
     watcher.data.set('x', true)
