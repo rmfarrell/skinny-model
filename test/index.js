@@ -1,11 +1,14 @@
 const assert = require('assert');
-const { primitiveWatcher, objectWatcher, mapWatcher, arrayWatcher } = require('../index');
+const { primitiveObserver,
+  objectObserver,
+  mapObserver,
+  arrayObserver } = require('../index');
 
-// -- PrimitiveWatcher
+// -- Primitive Observer
 
-describe('primitiveWatcher', function () {
+describe('primitiveObserver', function () {
   it('should update when a new value is set', function (done) {
-    let watcher = primitiveWatcher('foo', (val) => {
+    let watcher = primitiveObserver('foo', (val) => {
       assert.equal(watcher.data, 'bar')
       assert.equal(val, 'bar')
       done()
@@ -13,7 +16,7 @@ describe('primitiveWatcher', function () {
     watcher.data = 'bar'
   });
   it('should pass old value in onUpdate', function (done) {
-    let watcher = primitiveWatcher('foo', (newValue, oldValue) => {
+    let watcher = primitiveObserver('foo', (newValue, oldValue) => {
       assert.equal(oldValue, 'foo')
       done()
     }, true)
@@ -21,7 +24,7 @@ describe('primitiveWatcher', function () {
   })
   it('should not fire if original value is later mutated', (done) => {
     let subject = false
-    let watcher = primitiveWatcher(subject, (val) => {
+    let watcher = primitiveObserver(subject, (val) => {
       assert.equal(val, true)
       done()
     })
@@ -29,27 +32,27 @@ describe('primitiveWatcher', function () {
     watcher.data = true
   })
   it('should throw if non-primitive is passed as first param', function () {
-    assert.throws(() => primitiveWatcher({}), Error)
-    assert.throws(() => primitiveWatcher([]), Error)
-    assert.throws(() => primitiveWatcher(new Map()), Error)
-    assert.throws(() => primitiveWatcher(new Set()), Error)
-    assert.throws(() => primitiveWatcher(function () { }), Error)
+    assert.throws(() => primitiveObserver({}), Error)
+    assert.throws(() => primitiveObserver([]), Error)
+    assert.throws(() => primitiveObserver(new Map()), Error)
+    assert.throws(() => primitiveObserver(new Set()), Error)
+    assert.throws(() => primitiveObserver(function () { }), Error)
   })
 })
-describe('primitiveWatcher.subscribe', function () {
+describe('primitiveObserver.subscribe', function () {
   it('should allow the subscription of multiple callbacks', function () {
     let subject = 0
-    let watcher = primitiveWatcher(false)
+    let watcher = primitiveObserver(false)
     watcher.subscribe(() => { subject++ })
     watcher.subscribe(() => { subject = subject + 2 })
     watcher.data = true
     assert.equal(subject, 3)
   })
 })
-describe('primitiveWatcher.unsubscribe', function () {
+describe('primitiveObserver.unsubscribe', function () {
   it('should remove a callback on unsubscribe', function () {
     let subject = 0
-    let watcher = primitiveWatcher(false)
+    let watcher = primitiveObserver(false)
     const addOne = () => { subject++ }
     const addTwo = () => { subject = subject + 2 }
     watcher.subscribe(addOne)
@@ -63,9 +66,9 @@ describe('primitiveWatcher.unsubscribe', function () {
 })
 
 
-// -- Object Watcher
+// -- Object Observer
 
-describe('objectWatcher', function () {
+describe('objectObserver', function () {
   context('Object literal', function () {
     const expected = [
       { x: 2 },
@@ -89,7 +92,7 @@ describe('objectWatcher', function () {
     }
     it('should fire callback when data is updated', function (done) {
       let counter = 0
-      let watcher = objectWatcher({ x: 1 }, (data) => {
+      let watcher = objectObserver({ x: 1 }, (data) => {
         assert.deepEqual(data, expected[counter])
         assert.deepEqual(watcher.data, expected[counter])
         if (counter + 1 < expected.length) return counter++;
@@ -99,7 +102,7 @@ describe('objectWatcher', function () {
     })
     it('should pass clone of old data if third argument is true', function (done) {
       let counter = 0
-      let watcher = objectWatcher({ x: 1 }, (_, oldValue) => {
+      let watcher = objectObserver({ x: 1 }, (_, oldValue) => {
         if (counter > 0)
           assert.deepEqual(oldValue, expected[counter - 1])
         else
@@ -111,7 +114,7 @@ describe('objectWatcher', function () {
     })
     it('should not fire if original object is later mutated', function (done) {
       let subject = { x: false }
-      let watcher = objectWatcher(subject, ({ x }) => {
+      let watcher = objectObserver(subject, ({ x }) => {
         assert.equal(x, true)
         done()
       })
@@ -119,28 +122,28 @@ describe('objectWatcher', function () {
       watcher.data.x = true
     })
     it('should throw if non-object literal is passed as first param', function () {
-      assert.throws(() => objectWatcher(false), Error)
-      assert.throws(() => objectWatcher('foo'), Error)
-      assert.throws(() => objectWatcher(new Map()), Error)
-      assert.throws(() => objectWatcher(new Set()), Error)
-      assert.throws(() => objectWatcher([]), Error)
+      assert.throws(() => objectObserver(false), Error)
+      assert.throws(() => objectObserver('foo'), Error)
+      assert.throws(() => objectObserver(new Map()), Error)
+      assert.throws(() => objectObserver(new Set()), Error)
+      assert.throws(() => objectObserver([]), Error)
     })
   })
 })
-describe('objectWatcher.subscribe', function () {
+describe('objectObserver.subscribe', function () {
   it('should allow the subscription of multiple callbacks', function () {
     let subject = 0
-    let watcher = objectWatcher({ x: 1 })
+    let watcher = objectObserver({ x: 1 })
     watcher.subscribe(() => { subject++ })
     watcher.subscribe(() => { subject = subject + 2 })
     watcher.data.x = true
     assert.equal(subject, 3)
   })
 })
-describe('objectWatcher.unsubscribe', function () {
+describe('objectObserver.unsubscribe', function () {
   it('should remove a callback on unsubscribe', function () {
     let subject = 0
-    let watcher = objectWatcher({ x: 1 })
+    let watcher = objectObserver({ x: 1 })
     const addOne = () => { subject++ }
     const addTwo = () => { subject = subject + 2 }
     watcher.subscribe(addOne)
@@ -155,9 +158,9 @@ describe('objectWatcher.unsubscribe', function () {
 
 
 
-// -- Array Watcher
+// -- Array Observer
 
-describe('arrayWatcher', function () {
+describe('arrayObserver', function () {
   it('should fire callback when data is updated', function (done) {
     const expected = [
       [1, 2],
@@ -170,7 +173,7 @@ describe('arrayWatcher', function () {
       [1, 2, 'bar', , , undefined]
     ]
     let counter = 0
-    let watcher = arrayWatcher([1, 2, 3], (val) => {
+    let watcher = arrayObserver([1, 2, 3], (val) => {
       assert.deepEqual(watcher.data, expected[counter])
       assert.deepEqual(val, expected[counter])
       if (counter + 1 < expected.length) return counter++;
@@ -190,7 +193,7 @@ describe('arrayWatcher', function () {
   })
   it('should pass clone of old data if third argument is true', function (done) {
     let counter = 0
-    let watcher = arrayWatcher([1, 2, 3], (newValue, oldValue) => {
+    let watcher = arrayObserver([1, 2, 3], (newValue, oldValue) => {
       assert.deepEqual(oldValue, [1, 2, 3])
       assert.deepEqual(newValue, ['bar', 2, 3])
       done()
@@ -199,7 +202,7 @@ describe('arrayWatcher', function () {
   })
   it('should not fire if original array is later mutated', function (done) {
     let subject = [false, false]
-    let watcher = arrayWatcher(subject, (s) => {
+    let watcher = arrayObserver(subject, (s) => {
       assert.equal(s[0], true)
       done()
     })
@@ -207,27 +210,27 @@ describe('arrayWatcher', function () {
     watcher.data[0] = true
   })
   it('should throw if non-array is passed as first param', function () {
-    assert.throws(() => arrayWatcher(false), Error)
-    assert.throws(() => arrayWatcher('foo'), Error)
-    assert.throws(() => arrayWatcher(new Map()), Error)
-    assert.throws(() => arrayWatcher(new Set()), Error)
-    assert.throws(() => arrayWatcher({}), Error)
+    assert.throws(() => arrayObserver(false), Error)
+    assert.throws(() => arrayObserver('foo'), Error)
+    assert.throws(() => arrayObserver(new Map()), Error)
+    assert.throws(() => arrayObserver(new Set()), Error)
+    assert.throws(() => arrayObserver({}), Error)
   })
 })
-describe('arrayWatcher.subscribe', function () {
+describe('arrayObserver.subscribe', function () {
   it('should allow the subscription of multiple callbacks', function () {
     let subject = 0
-    let watcher = arrayWatcher([])
+    let watcher = arrayObserver([])
     watcher.subscribe(() => { subject++ })
     watcher.subscribe(() => { subject = subject + 2 })
     watcher.data[0] = true
     assert.equal(subject, 3)
   })
 })
-describe('arrayWatcher.unsubscribe', function () {
+describe('arrayObserver.unsubscribe', function () {
   it('should remove a callback on unsubscribe', function () {
     let subject = 0
-    let watcher = arrayWatcher([])
+    let watcher = arrayObserver([])
     const addOne = () => { subject++ }
     const addTwo = () => { subject = subject + 2 }
     watcher.subscribe(addOne)
@@ -241,14 +244,14 @@ describe('arrayWatcher.unsubscribe', function () {
 
 
 
-// -- Map Watcher
+// -- Map Observer
 
-describe('mapWatcher', function () {
+describe('mapObserver', function () {
   it('should fire callback when data is updated', function (done) {
     let mappy = new Map()
     mappy.set('x', 'foo')
     mappy.set('y', 2)
-    let watcher = mapWatcher(mappy, () => {
+    let watcher = mapObserver(mappy, () => {
       assert.equal(watcher.data.get('x'), 'bar')
       assert.equal(watcher.data.get('y'), 2)
       done()
@@ -259,7 +262,7 @@ describe('mapWatcher', function () {
     let mappy = new Map()
     mappy.set('x', 'foo')
     mappy.set('y', 2)
-    let watcher = mapWatcher(mappy, () => {
+    let watcher = mapObserver(mappy, () => {
       assert.equal(watcher.data.get('x'), undefined)
       assert.equal(watcher.data.get('y'), 2)
       done()
@@ -270,7 +273,7 @@ describe('mapWatcher', function () {
     let mappy = new Map()
     mappy.set('x', 'foo')
     mappy.set('y', 2)
-    let watcher = mapWatcher(mappy, (current, previous) => {
+    let watcher = mapObserver(mappy, (current, previous) => {
       assert.equal(current.get('x'), 'bar')
       assert.equal(current.get('y'), 2)
       assert.equal(previous.get('x'), 'foo')
@@ -282,7 +285,7 @@ describe('mapWatcher', function () {
   it('should not fire if original array is later mutated', function (done) {
     let mappy = new Map()
     mappy.set('x', false)
-    let watcher = mapWatcher(mappy, (s) => {
+    let watcher = mapObserver(mappy, (s) => {
       assert.equal(s.get('x'), true)
       done()
     })
@@ -290,27 +293,27 @@ describe('mapWatcher', function () {
     watcher.data.set('x', true)
   })
   it('should throw if non-map is passed as first param', function () {
-    assert.throws(() => mapWatcher(false), Error)
-    assert.throws(() => mapWatcher('foo'), Error)
-    assert.throws(() => mapWatcher([]), Error)
-    assert.throws(() => mapWatcher(new Set()), Error)
-    assert.throws(() => mapWatcher({}), Error)
+    assert.throws(() => mapObserver(false), Error)
+    assert.throws(() => mapObserver('foo'), Error)
+    assert.throws(() => mapObserver([]), Error)
+    assert.throws(() => mapObserver(new Set()), Error)
+    assert.throws(() => mapObserver({}), Error)
   })
 })
-describe('mapWatcher.subscribe', function () {
+describe('mapObserver.subscribe', function () {
   it('should allow the subscription of multiple callbacks', function () {
     let subject = 0
-    let watcher = mapWatcher(new Map())
+    let watcher = mapObserver(new Map())
     watcher.subscribe(() => subject++)
     watcher.subscribe(() => subject = subject + 2)
     watcher.data.set('x', false)
     assert.equal(subject, 3)
   })
 })
-describe('mapWatcher.unsubscribe', function () {
+describe('mapObserver.unsubscribe', function () {
   it('should remove a callback on unsubscribe', function () {
     let subject = 0
-    let watcher = mapWatcher(new Map())
+    let watcher = mapObserver(new Map())
     const addOne = () => subject++
     const addTwo = () => subject = subject + 2
     watcher.subscribe(addOne)

@@ -1,8 +1,8 @@
 module.exports = {
-  primitiveWatcher,
-  objectWatcher,
-  mapWatcher,
-  arrayWatcher,
+  primitiveObserver,
+  objectObserver,
+  mapObserver,
+  arrayObserver,
 }
 
 /**
@@ -19,7 +19,7 @@ module.exports = {
  * @param {function} onUpdate
  * @return {PrimitiveWatcher}
  */
-function primitiveWatcher(value, onUpdate = function () { }) {
+function primitiveObserver(value, onUpdate = function () { }) {
   if (_isObject(value)) throw new Error(`${value} is not a primitive value.`)
   const callbackCollection = _CallbackCollection([onUpdate])
   let _value = value
@@ -56,7 +56,7 @@ function primitiveWatcher(value, onUpdate = function () { }) {
  * @param {boolean} clone
  * @return {ObjectWatcher}
  */
-function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
+function objectObserver(input = {}, onUpdate = function () { }, clone = false) {
   if (input.constructor.name !== 'Object') {
     throw new Error(`Expected Object literal. Recieved ${input.constructor.name}`)
   }
@@ -96,7 +96,7 @@ function objectWatcher(input = {}, onUpdate = function () { }, clone = false) {
  * @param {boolean} clone
  * @return {ObjectWatcher}
  */
-function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
+function arrayObserver(input = {}, onUpdate = function () { }, clone = false) {
   if (input.constructor.name !== 'Array') {
     throw new Error(`Expected Array. Recieved ${input.constructor.name}`)
   }
@@ -129,7 +129,7 @@ function arrayWatcher(input = {}, onUpdate = function () { }, clone = false) {
  * @param {boolean} clone
  * @return {ObjectWatcher}
  */
-function mapWatcher(input, onUpdate = function () { }, clone = false) {
+function mapObserver(input, onUpdate = function () { }, clone = false) {
   if (input.constructor.name !== 'Map') {
     throw new Error(`Expected Map. Recieved ${input.constructor.name}`)
   }
