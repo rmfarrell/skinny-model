@@ -17,7 +17,7 @@ describe('primitiveWatcher', function () {
       done()
     }, true)
     watcher.data = 'bar'
-  });
+  })
   it('should allow reassignment to onUpdate', (done) => {
     let watcher = primitiveWatcher('foo')
     watcher.onUpdate = (val) => {
@@ -25,6 +25,15 @@ describe('primitiveWatcher', function () {
       done()
     }
     watcher.data = 'bar'
+  })
+  it('should not fire if original value is later mutated', (done) => {
+    let subject = false
+    let watcher = primitiveWatcher(subject, (val) => {
+      assert.equal(val, true)
+      done()
+    })
+    subject = 'should fail'
+    watcher.data = true
   })
 });
 
@@ -77,6 +86,15 @@ describe('objectWatcher', function () {
       }, true)
       runMutations(watcher)
     })
+    it('should not fire if original object is later mutated', function (done) {
+      let subject = { x: false }
+      let watcher = objectWatcher(subject, ({ x }) => {
+        assert.equal(x, true)
+        done()
+      })
+      subject.x = 'should fail'
+      watcher.data.x = true
+    })
   })
 })
 
@@ -120,6 +138,15 @@ describe('arrayWatcher', function () {
     }, true)
     watcher.data[0] = 'bar'
   })
+  it('should not fire if original array is later mutated', function (done) {
+    let subject = [false, false]
+    let watcher = objectWatcher(subject, (s) => {
+      assert.equal(s[0], true)
+      done()
+    })
+    subject[0] = 'should fail'
+    watcher.data[0] = true
+  })
 })
 
 describe('mapWatcher', function () {
@@ -133,7 +160,7 @@ describe('mapWatcher', function () {
       done()
     })
     watcher.data.set('x', 'bar')
-  });
+  })
   it('should fire callback when map item is deleted', function (done) {
     let mappy = new Map()
     mappy.set('x', 'foo')
@@ -144,8 +171,7 @@ describe('mapWatcher', function () {
       done()
     })
     watcher.data.delete('x')
-  });
-
+  })
   it('should pass a clone to the callback if the third argument is true', function (done) {
     let mappy = new Map()
     mappy.set('x', 'foo')
@@ -158,5 +184,15 @@ describe('mapWatcher', function () {
       done()
     }, true)
     watcher.data.set('x', 'bar')
+  })
+  it('should not fire if original array is later mutated @', function (done) {
+    let mappy = new Map()
+    mappy.set('x', false)
+    let watcher = mapWatcher(mappy, (s) => {
+      assert.equal(s.get('x'), true)
+      done()
+    })
+    mappy.set('x', 'should fail')
+    watcher.data.set('x', true)
   })
 })
