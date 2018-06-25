@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { primitiveWatcher, objectWatcher, mapWatcher, arrayWatcher } = require('../index');
 
-
+// -- PrimitiveWatcher
 describe('primitiveWatcher', function () {
   it('should update when a new value is set', function (done) {
     let watcher = primitiveWatcher('foo', (val) => {
@@ -18,7 +18,7 @@ describe('primitiveWatcher', function () {
     }, true)
     watcher.data = 'bar'
   })
-  it('should allow reassignment to onUpdate', (done) => {
+  it('should allow multiplle to onUpdate', (done) => {
     let watcher = primitiveWatcher('foo')
     watcher.onUpdate = (val) => {
       assert.equal(val, 'bar')
@@ -35,7 +35,36 @@ describe('primitiveWatcher', function () {
     subject = 'should fail'
     watcher.data = true
   })
-});
+})
+
+describe('primitiveWatcher.subscribe', function () {
+  it('should allow the subscription of multiple callbacks', function () {
+    let subject = 0
+    let watcher = primitiveWatcher(false)
+    watcher.subscribe(() => { subject++ })
+    watcher.subscribe(() => { subject = subject + 2 })
+    watcher.data = true
+    assert.equal(subject, 3)
+  })
+})
+
+describe('primitiveWatcher.unsubscribe @', function () {
+  it('should remove a callback on unsubscribe', function () {
+    let subject = 0
+    let watcher = primitiveWatcher(false)
+    const addOne = () => { subject++ }
+    const addTwo = () => { subject = subject + 2 }
+    watcher.subscribe(addOne)
+    watcher.subscribe(addTwo)
+    // modify data twice; 2nd time unsubscribing addTwo.
+    watcher.data = true
+    watcher.unsubscribe(addTwo)
+    watcher.data = false
+    assert.equal(subject, 4)
+  })
+})
+
+
 
 describe('objectWatcher', function () {
   // context('Not an object', function () {
@@ -95,6 +124,33 @@ describe('objectWatcher', function () {
       subject.x = 'should fail'
       watcher.data.x = true
     })
+  })
+})
+
+describe('objectWatcher.subscribe', function () {
+  it('should allow the subscription of multiple callbacks', function () {
+    let subject = 0
+    let watcher = objectWatcher({ x: 1 })
+    watcher.subscribe(() => { subject++ })
+    watcher.subscribe(() => { subject = subject + 2 })
+    watcher.data.x = true
+    assert.equal(subject, 3)
+  })
+})
+
+describe('objectWatcher.unsubscribe', function () {
+  it('should remove a callback on unsubscribe', function () {
+    let subject = 0
+    let watcher = objectWatcher({ x: 1 })
+    const addOne = () => { subject++ }
+    const addTwo = () => { subject = subject + 2 }
+    watcher.subscribe(addOne)
+    watcher.subscribe(addTwo)
+    // modify data twice; 2nd time unsubscribing addTwo.
+    watcher.data.x = true
+    watcher.unsubscribe(addTwo)
+    watcher.data.x = false
+    assert.equal(subject, 4)
   })
 })
 
@@ -185,7 +241,7 @@ describe('mapWatcher', function () {
     }, true)
     watcher.data.set('x', 'bar')
   })
-  it('should not fire if original array is later mutated @', function (done) {
+  it('should not fire if original array is later mutated', function (done) {
     let mappy = new Map()
     mappy.set('x', false)
     let watcher = mapWatcher(mappy, (s) => {
